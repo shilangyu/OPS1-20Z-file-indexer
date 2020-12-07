@@ -1,11 +1,9 @@
 #include "cmd.h"
 #include "../main.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 void help_exit(char *prog_name) {
     fprintf(stderr,

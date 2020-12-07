@@ -64,5 +64,6 @@ args_t parse_arguments(int argc, char **argv) {
         fprintf(stderr, "-t is not in range\n");
         exit(EXIT_FAILURE);
     }
-    printf("d = %s, f = %s, t = %d\n", args.directory, args.index_file, args.rebuild_interval);
+
+    return args;
 }

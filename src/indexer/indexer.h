@@ -14,8 +14,12 @@ typedef enum {
     INDEX_FILE_TYPE_JPEG,
     INDEX_FILE_TYPE_PNG,
     INDEX_FILE_TYPE_GZIP,
-    INDEX_FILE_TYPE_ZIP
+    INDEX_FILE_TYPE_ZIP,
+    INDEX_FILE_TYPE_UNKNOWN
 } index_file_type;
+
+/// reads the file signature to determine file type
+index_file_type get_file_type(const char *filename, int type);
 
 /// type describing an indexed file
 typedef struct {

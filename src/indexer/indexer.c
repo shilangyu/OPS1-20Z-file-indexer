@@ -21,13 +21,11 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
 
     // TODO: check if paths are too long
     indexed_file_t in = {
-        .filename = strcpy(malloc(sizeof(char) * PATH_LENGTH_LIMIT), name),
-        .path     = realpath(name, NULL),
-        .type     = t,
-        // TODO: get this
-        .owner_uid = 0,
-        // TODO: get this
-        .size = 0};
+        .filename  = strcpy(malloc(sizeof(char) * PATH_LENGTH_LIMIT), name),
+        .path      = realpath(name, NULL),
+        .type      = t,
+        .owner_uid = s->st_uid,
+        .size      = s->st_size};
 
     _index[_curr++] = in;
 

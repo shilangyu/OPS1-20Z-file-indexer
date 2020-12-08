@@ -19,6 +19,7 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
         return 0;
     }
 
+    // TODO: check if paths are too long
     indexed_file_t in = {
         .filename = strcpy(malloc(sizeof(char) * PATH_LENGTH_LIMIT), name),
         .path     = realpath(name, NULL),

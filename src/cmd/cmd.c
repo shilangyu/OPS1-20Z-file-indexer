@@ -1,3 +1,4 @@
+// #define _GNU_SOURCE
 #include "cmd.h"
 #include "../main.h"
 #include <getopt.h>
@@ -23,22 +24,18 @@ void help_exit(char *prog_name) {
 
 args_t parse_arguments(int argc, char **argv) {
     args_t args = {
-        .directory        = malloc(sizeof(char) * PATH_LENGTH_LIMIT),
-        .index_file       = malloc(sizeof(char) * PATH_LENGTH_LIMIT),
+        .directory        = NULL,
+        .index_file       = NULL,
         .rebuild_interval = 0};
-
-    // set defaults
-    args.directory  = getenv("MOLE_DIR");
-    args.index_file = getenv("MOLE_INDEX_PATH");
 
     int opt;
     while ((opt = getopt(argc, argv, "d:f:t:")) != -1) {
         switch (opt) {
         case 'd':
-            strcpy(args.directory, optarg);
+            args.directory = optarg;
             break;
         case 'f':
-            strcpy(args.index_file, optarg);
+            args.index_file = optarg;
             break;
         case 't':
             args.rebuild_interval = atoi(optarg);
@@ -49,14 +46,26 @@ args_t parse_arguments(int argc, char **argv) {
         }
     }
 
-    // error check
+    // set fallbacks/error check
     if (args.directory == NULL) {
-        fprintf(stderr, "$MOLE_DIR does not exists nor was the -d option passed\n");
-        exit(EXIT_FAILURE);
+        args.directory = getenv("MOLE_DIR");
+
+        if (args.directory == NULL) {
+            fprintf(stderr, "$MOLE_DIR does not exists nor was the -d option passed\n");
+            exit(EXIT_FAILURE);
+        }
     }
     if (args.index_file == NULL) {
-        args.index_file = getenv("HOME");
-        strcat(args.index_file, "/.mole-index");
+        args.index_file = getenv("MOLE_INDEX_PATH");
+
+        if (args.index_file == NULL) {
+            char *home = getenv("HOME");
+            char *path = "/.mole-index";
+
+            args.index_file = calloc((strlen(home) + strlen(path) + 1), sizeof(char));
+            strcat(args.index_file, home);
+            strcat(args.index_file, path);
+        }
     }
     if (args.rebuild_interval != 0 && (args.rebuild_interval < 30 || args.rebuild_interval > 7200)) {
         fprintf(stderr, "-t is not in range\n");

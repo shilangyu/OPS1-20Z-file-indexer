@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -lpthread -lm -Wall
+CFLAGS = -lpthread -lm -Wall -fanalyzer
 
 SOURCE_FILES = $(shell find src/ -type f -name '*.c')
 

@@ -3,6 +3,7 @@
 #include "../cmd/cmd.h"
 #include "../indexer/indexer.h"
 #include <assert.h>
+#include <getopt.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,28 +18,36 @@ void get_file_type_test() {
 }
 
 void parse_arguments_test() {
-    setenv("MOLE_DIR", "placeholder", true);
+    setenv("MOLE_DIR", "placeholder1", true);
+    setenv("MOLE_INDEX_PATH", "placeholder2", true);
     {
-        char *argv[] = {"molea", "-t", "420"};
-        args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
-        assert(args.rebuild_interval == 420);
-        assert(strcmp(args.directory, "placeholer"));
-    }
-    {
-        char *argv[] = {"mole", "-d", "somewhere", "-f", "mole/file"};
-        args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
-        assert(args.rebuild_interval == 0);
-        assert(strcmp(args.directory, "somewhere"));
-        assert(strcmp(args.index_file, "mole/file"));
-    }
-    {
-        setenv("MOLE_DIR", "hello", true);
-        setenv("MOLE_INDEX_PATH", "world", true);
         char *argv[] = {"mole"};
         args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
         assert(args.rebuild_interval == 0);
-        assert(strcmp(args.directory, "hello"));
-        assert(strcmp(args.index_file, "world"));
+        assert(!strcmp(args.directory, "placeholder1"));
+        assert(!strcmp(args.index_file, "placeholder2"));
+        optind = 1;
+    };
+    {
+        char *argv[] = {"mole", "-d", "somewhere", "-f", "mole/file", "-t", "420"};
+        args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
+        assert(args.rebuild_interval == 420);
+        assert(!strcmp(args.directory, "somewhere"));
+        assert(!strcmp(args.index_file, "mole/file"));
+        optind = 1;
+    };
+    {
+        putenv("MOLE_INDEX_PATH=");
+        char *home = getenv("HOME");
+        char *path = "/.mole-index";
+        char *res  = calloc((strlen(home) + strlen(path) + 1), sizeof(char));
+        strcat(res, home);
+        strcat(res, path);
+
+        char *argv[] = {"mole"};
+        args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
+        assert(!strcmp(res, res));
+        optind = 1;
     }
 }
 

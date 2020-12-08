@@ -23,6 +23,7 @@ index_file_type get_file_type(const char *filename, int type) {
     static const size_t SIG_SIZE = 12;
     uint8_t buffer[SIG_SIZE];
     CHECK(read(fd, buffer, SIG_SIZE) == -1);
+    CHECK(close(fd));
 
 // helper for checking signatures
 #define CHECK_SIGNATURE(then_return, ...)                               \
@@ -52,8 +53,6 @@ index_file_type get_file_type(const char *filename, int type) {
     // CHECK_SIGNATURE(INDEX_FILE_TYPE_JPEG, {0xFF, 0xD8, 0xFF, 0xE1, 0x??, 0x??, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00});
 
 #undef CHECK_SIGNATURE
-
-    CHECK(close(fd));
 
     return INDEX_FILE_TYPE_UNKNOWN;
 }

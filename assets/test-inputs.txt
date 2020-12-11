@@ -1,0 +1,8 @@
+asdasd
+count
+exit
+exit!
+index
+largerthan 123
+namepart hello
+owner 321

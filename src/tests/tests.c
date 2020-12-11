@@ -2,9 +2,11 @@
 
 #include "../cmd/cmd.h"
 #include "../indexer/indexer.h"
+#include "../repl/repl.h"
 #include <assert.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,6 +22,7 @@ void get_file_type_test() {
 void parse_arguments_test() {
     setenv("MOLE_DIR", "placeholder1", true);
     setenv("MOLE_INDEX_PATH", "placeholder2", true);
+
     {
         char *argv[] = {"mole"};
         args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
@@ -27,7 +30,8 @@ void parse_arguments_test() {
         assert(!strcmp(args.directory, "placeholder1"));
         assert(!strcmp(args.index_file, "placeholder2"));
         optind = 1;
-    };
+    }
+
     {
         char *argv[] = {"mole", "-d", "somewhere", "-f", "mole/file", "-t", "420"};
         args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
@@ -35,7 +39,8 @@ void parse_arguments_test() {
         assert(!strcmp(args.directory, "somewhere"));
         assert(!strcmp(args.index_file, "mole/file"));
         optind = 1;
-    };
+    }
+
     {
         unsetenv("MOLE_INDEX_PATH");
         char *home = getenv("HOME");
@@ -60,9 +65,57 @@ void index_file_type_repr_test() {
     assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_ZIP), "ZIP archive"));
 }
 
+void read_next_test() {
+    // feed in inputs from assets/test-inputs.txt
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_UNKNOWN);
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_COUNT);
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_EXIT);
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_EXIT_FORCE);
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_INDEX);
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_LARGER_THAN);
+        assert(cmd.param.num == 123);
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_NAME_PART);
+        assert(!strcmp(cmd.param.str, "hello"));
+    }
+
+    {
+        command_t cmd = read_next();
+        assert(cmd.type == COMMAND_TYPE_OWNER);
+        assert(cmd.param.num == 321);
+    }
+}
+
 int main() {
     get_file_type_test();
     parse_arguments_test();
     index_file_type_repr_test();
+    read_next_test();
 }
 #endif

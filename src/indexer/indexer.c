@@ -10,7 +10,7 @@
 #include <string.h>
 
 // boo, goddamn C
-indexed_file_t _index[INDEX_SIZE];
+index_entry_t _index[INDEX_SIZE];
 size_t _curr = 0;
 
 int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
@@ -22,7 +22,7 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     if (filename == NULL) ERR("malloc");
 
     // TODO: check if paths are too long
-    indexed_file_t in = {
+    index_entry_t in = {
         .filename  = strcpy(filename, name),
         .path      = realpath(name, NULL),
         .type      = t,

@@ -28,6 +28,6 @@ typedef struct {
     char *path;
     size_t size;
     size_t owner_uid;
-} indexed_file_t;
+} index_entry_t;
 
 #endif

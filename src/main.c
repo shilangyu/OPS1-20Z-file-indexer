@@ -43,9 +43,45 @@ int main(int argc, char *argv[]) {
         case COMMAND_TYPE_INDEX:
 
             break;
-        case COMMAND_TYPE_COUNT:
+        case COMMAND_TYPE_COUNT: {
+            int dirs  = 0;
+            int jpgs  = 0;
+            int pngs  = 0;
+            int gzips = 0;
+            int zips  = 0;
+            // TODO: should not block actually, indexing should work on a working copy
+            pthread_mutex_lock(&state.index_mtx);
+            for (size_t i = 0; i < state.index_length; i++) {
+                switch (state.index[i].type) {
+                case INDEX_FILE_TYPE_DIR:
+                    dirs++;
+                    break;
+                case INDEX_FILE_TYPE_JPEG:
+                    jpgs++;
+                    break;
+                case INDEX_FILE_TYPE_PNG:
+                    pngs++;
+                    break;
+                case INDEX_FILE_TYPE_GZIP:
+                    gzips++;
+                    break;
+                case INDEX_FILE_TYPE_ZIP:
+                    zips++;
+                    break;
+                default:
+                    break;
+                }
+            }
+            pthread_mutex_unlock(&state.index_mtx);
+
+            printf("%s: %d\n", index_file_type_repr(INDEX_FILE_TYPE_DIR), dirs);
+            printf("%s: %d\n", index_file_type_repr(INDEX_FILE_TYPE_JPEG), jpgs);
+            printf("%s: %d\n", index_file_type_repr(INDEX_FILE_TYPE_PNG), pngs);
+            printf("%s: %d\n", index_file_type_repr(INDEX_FILE_TYPE_GZIP), gzips);
+            printf("%s: %d\n", index_file_type_repr(INDEX_FILE_TYPE_ZIP), zips);
 
             break;
+        }
         case COMMAND_TYPE_LARGER_THAN:
 
             break;

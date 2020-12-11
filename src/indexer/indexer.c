@@ -17,26 +17,29 @@ struct thread_data {
 };
 
 // boo, goddamn C
-index_entry_t _index[INDEX_SIZE];
-size_t _curr = 0;
+index_entry_t *_index;
+size_t *_index_length;
+size_t *_index_capacity;
 
 int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     index_file_type t = get_file_type(name, type);
     if (t == INDEX_FILE_TYPE_UNKNOWN) {
         return 0;
     }
-    char *filename = malloc(sizeof(char) * PATH_LENGTH_LIMIT);
-    if (filename == NULL) ERR("malloc");
 
-    // TODO: check if paths are too long
     index_entry_t in = {
-        .filename  = strcpy(filename, name),
+        .filename  = strdup(name),
         .path      = realpath(name, NULL),
         .type      = t,
         .owner_uid = s->st_uid,
         .size      = s->st_size};
 
-    _index[_curr++] = in;
+    if (*_index_length == *_index_capacity) {
+        // reallocate some memory
+        return 1;
+    }
+
+    _index[(*_index_length)++] = in;
 
     return 0;
 }
@@ -55,7 +58,7 @@ void *indexer(void *arg) {
         data->state->is_building = false;
         pthread_mutex_unlock(&data->state->is_building_mtx);
 
-        printf("Finished indexing %ld files.\n", _curr);
+        printf("Finished indexing %ld files.\n", data->state->index_length);
 
         if (data->args.rebuild_interval == 0) break;
 
@@ -67,6 +70,10 @@ void *indexer(void *arg) {
 
 pthread_t start_indexer(args_t args, mole_state_t *state) {
     pthread_t tid;
+
+    _index          = state->index;
+    _index_length   = &state->index_length;
+    _index_capacity = &state->index_capacity;
 
     struct thread_data *data = malloc(sizeof(struct thread_data));
     CHECK(data == NULL);

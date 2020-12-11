@@ -7,10 +7,6 @@
 /// max amount of file descriptors used during indexing
 #define MAX_FD 30
 
-/// max amount of indexed files
-//TODO: remove the limit and implement a vector on the index
-#define INDEX_SIZE 3000
-
 /// used for unrecoverable errors (panics)
 #define ERR(source)                                                  \
     (perror(source), fprintf(stderr, "%s:%d\n", __FILE__, __LINE__), \

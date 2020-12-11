@@ -39,6 +39,7 @@ typedef struct {
 
     index_entry_t *index;
     size_t index_length;
+    size_t index_capacity;
     pthread_mutex_t index_mtx;
 } mole_state_t;
 

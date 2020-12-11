@@ -56,3 +56,29 @@ index_file_type get_file_type(const char *filename, int type) {
 
     return INDEX_FILE_TYPE_UNKNOWN;
 }
+
+char *index_file_type_repr(index_file_type type) {
+    switch (type) {
+    case INDEX_FILE_TYPE_PNG:
+        return "PNG image";
+        break;
+    case INDEX_FILE_TYPE_GZIP:
+        return "GZIP archive";
+        break;
+    case INDEX_FILE_TYPE_ZIP:
+        return "ZIP archive";
+        break;
+    case INDEX_FILE_TYPE_JPEG:
+        return "JPEG image";
+        break;
+    case INDEX_FILE_TYPE_DIR:
+        return "directory";
+        break;
+    case INDEX_FILE_TYPE_UNKNOWN:
+        return "unknown";
+        break;
+    default:
+        fprintf(stderr, "unsupported file type\n");
+        exit(EXIT_FAILURE);
+    }
+}

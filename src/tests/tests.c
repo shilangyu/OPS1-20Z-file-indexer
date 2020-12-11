@@ -37,7 +37,7 @@ void parse_arguments_test() {
         optind = 1;
     };
     {
-        putenv("MOLE_INDEX_PATH=");
+        unsetenv("MOLE_INDEX_PATH");
         char *home = getenv("HOME");
         char *path = "/.mole-index";
         char *res  = calloc((strlen(home) + strlen(path) + 1), sizeof(char));
@@ -46,13 +46,23 @@ void parse_arguments_test() {
 
         char *argv[] = {"mole"};
         args_t args  = parse_arguments(sizeof(argv) / sizeof(argv[0]), argv);
-        assert(!strcmp(res, res));
+        assert(!strcmp(args.index_file, res));
         optind = 1;
     }
+}
+
+void index_file_type_repr_test() {
+    assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_DIR), "directory"));
+    assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_GZIP), "GZIP archive"));
+    assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_JPEG), "JPEG image"));
+    assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_PNG), "PNG image"));
+    assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_UNKNOWN), "unknown"));
+    assert(!strcmp(index_file_type_repr(INDEX_FILE_TYPE_ZIP), "ZIP archive"));
 }
 
 int main() {
     get_file_type_test();
     parse_arguments_test();
+    index_file_type_repr_test();
 }
 #endif

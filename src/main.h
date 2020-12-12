@@ -1,9 +1,6 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
-/// buffer size for all strings that hold filenames/paths
-#define PATH_LENGTH_LIMIT 500
-
 /// max amount of file descriptors used during indexing
 #define MAX_FD 30
 

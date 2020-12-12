@@ -11,6 +11,16 @@
 #include <string.h>
 #include <unistd.h>
 
+/// frees all memory held by an index
+void destroy_index(index_entry_t *index, size_t index_length) {
+    for (size_t i = 0; i < index_length; i++) {
+        free(index[i].filename);
+        free(index[i].path);
+    }
+
+    free(index);
+}
+
 struct thread_data {
     args_t args;
     mole_state_t *state;
@@ -72,10 +82,10 @@ void *indexer(void *arg) {
             nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
 
             pthread_mutex_lock(&data->state->index_mtx);
+            destroy_index(data->state->index, data->state->index_length);
             data->state->index_capacity = _index_capacity;
             data->state->index_length   = _index_length;
-            // TODO: memory leak, should cleanup data->state->index first
-            data->state->index = _index;
+            data->state->index          = _index;
             pthread_mutex_unlock(&data->state->index_mtx);
 
             pthread_mutex_lock(&data->state->is_building_mtx);

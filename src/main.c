@@ -83,16 +83,23 @@ int main(int argc, char *argv[]) {
             break;
         }
         case COMMAND_TYPE_LARGER_THAN:
-
+            pthread_mutex_lock(&state.index_mtx);
+            print_satisfying(state.index, state.index_length, largerthan_predicate, (void *)&cmd.param.num);
+            pthread_mutex_unlock(&state.index_mtx);
             break;
         case COMMAND_TYPE_NAME_PART:
-
+            pthread_mutex_lock(&state.index_mtx);
+            print_satisfying(state.index, state.index_length, namepart_predicate, (void *)cmd.param.str);
+            pthread_mutex_unlock(&state.index_mtx);
+            free(cmd.param.str);
             break;
         case COMMAND_TYPE_OWNER:
-
+            pthread_mutex_lock(&state.index_mtx);
+            print_satisfying(state.index, state.index_length, owner_predicate, (void *)&cmd.param.num);
+            pthread_mutex_unlock(&state.index_mtx);
             break;
         case COMMAND_TYPE_UNKNOWN:
-
+            puts("Unknown command");
             break;
         }
     }

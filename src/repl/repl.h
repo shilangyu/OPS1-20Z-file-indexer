@@ -29,6 +29,10 @@ typedef struct {
 command_t read_next();
 
 /// given the index and a filtering predicate, will print all matching index entries
-void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicate)(index_entry_t index));
+void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicate)(index_entry_t index, void *arg), void *arg);
+
+bool largerthan_predicate(index_entry_t index, void *arg);
+bool namepart_predicate(index_entry_t index, void *arg);
+bool owner_predicate(index_entry_t index, void *arg);
 
 #endif

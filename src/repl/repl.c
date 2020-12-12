@@ -6,9 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 
-void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicate)(index_entry_t index)) {
+void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicate)(index_entry_t index, void *arg), void *arg) {
     for (size_t i = 0; i < index_length; i++) {
-        if (predicate(index[i])) {
+        if (predicate(index[i], arg)) {
             printf("%s:\n"
                    "\tSize: %ld\n"
                    "\tType: %s\n",

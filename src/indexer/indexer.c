@@ -18,8 +18,8 @@ struct thread_data {
 
 // boo, goddamn C
 index_entry_t *_index;
-size_t *_index_length;
-size_t *_index_capacity;
+size_t _index_length;
+size_t _index_capacity;
 
 int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     index_file_type t = get_file_type(name, type);
@@ -34,12 +34,12 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
         .owner_uid = s->st_uid,
         .size      = s->st_size};
 
-    if (*_index_length == *_index_capacity) {
-        // reallocate some memory
-        return 1;
+    if (_index_length == _index_capacity) {
+        _index_capacity *= 2;
+        _index = realloc(_index, sizeof(index_entry_t) * _index_capacity);
     }
 
-    _index[(*_index_length)++] = in;
+    _index[_index_length++] = in;
 
     return 0;
 }
@@ -48,11 +48,22 @@ void *indexer(void *arg) {
     struct thread_data *data = (struct thread_data *)arg;
 
     while (true) {
+        _index_length   = 0;
+        _index_capacity = data->state->index_capacity;
+        _index          = malloc(sizeof(index_entry_t) * _index_capacity);
+
         pthread_mutex_lock(&data->state->is_building_mtx);
         data->state->is_building = true;
         pthread_mutex_unlock(&data->state->is_building_mtx);
 
         nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
+
+        pthread_mutex_lock(&data->state->index_mtx);
+        data->state->index_capacity = _index_capacity;
+        data->state->index_length   = _index_length;
+        // TODO: memory leak, should cleanup data->state->index first
+        data->state->index = _index;
+        pthread_mutex_unlock(&data->state->index_mtx);
 
         pthread_mutex_lock(&data->state->is_building_mtx);
         data->state->is_building = false;
@@ -70,10 +81,6 @@ void *indexer(void *arg) {
 
 pthread_t start_indexer(args_t args, mole_state_t *state) {
     pthread_t tid;
-
-    _index          = state->index;
-    _index_length   = &state->index_length;
-    _index_capacity = &state->index_capacity;
 
     struct thread_data *data = malloc(sizeof(struct thread_data));
     CHECK(data == NULL);

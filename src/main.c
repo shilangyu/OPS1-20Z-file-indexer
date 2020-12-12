@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
             int pngs  = 0;
             int gzips = 0;
             int zips  = 0;
-            // TODO: should not block actually, indexing should work on a working copy
+
             pthread_mutex_lock(&state.index_mtx);
             for (size_t i = 0; i < state.index_length; i++) {
                 switch (state.index[i].type) {

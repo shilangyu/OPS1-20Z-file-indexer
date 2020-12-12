@@ -41,6 +41,13 @@ int main(int argc, char *argv[]) {
 
             break;
         case COMMAND_TYPE_INDEX:
+            pthread_mutex_lock(&state.is_building_mtx);
+            if (state.is_building) {
+                puts("Indexer is in the midst of an indexing.");
+            } else {
+                CHECK(pthread_kill(indexer_tid, SIGREINDEX));
+            }
+            pthread_mutex_unlock(&state.is_building_mtx);
 
             break;
         case COMMAND_TYPE_COUNT: {

@@ -7,15 +7,41 @@
 #include <unistd.h>
 
 void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicate)(index_entry_t index, void *arg), void *arg) {
+    bool has_over_3 = false;
+    size_t found    = 0;
     for (size_t i = 0; i < index_length; i++) {
         if (predicate(index[i], arg)) {
-            printf("%s:\n"
-                   "\tSize: %ld\n"
-                   "\tType: %s\n",
-                   index[i].path,
-                   index[i].size,
-                   index_file_type_repr(index[i].type));
+            found++;
+            if (found == 3) {
+                has_over_3 = true;
+                break;
+            }
         }
+    }
+
+    FILE *out = stdout;
+
+    char *pager;
+    if (has_over_3 && (pager = getenv("PAGER")) != NULL) {
+        out = popen(pager, "w");
+        if (out == NULL) {
+            ERR("popen");
+        }
+    }
+
+    for (size_t i = 0; i < index_length; i++) {
+        if (predicate(index[i], arg)) {
+            fprintf(out, "%s:\n"
+                         "\tSize: %ld\n"
+                         "\tType: %s\n",
+                    index[i].path,
+                    index[i].size,
+                    index_file_type_repr(index[i].type));
+        }
+    }
+
+    if (out != stdout) {
+        CHECK(pclose(out));
     }
 }
 

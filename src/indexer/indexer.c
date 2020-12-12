@@ -14,6 +14,7 @@
 struct thread_data {
     args_t args;
     mole_state_t *state;
+    sigset_t *mask;
 };
 
 // boo, goddamn C
@@ -47,33 +48,52 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
 void *indexer(void *arg) {
     struct thread_data *data = (struct thread_data *)arg;
 
+    bool first_run = true;
+    int sig        = SIGREINDEX;
     while (true) {
-        _index_length   = 0;
-        _index_capacity = data->state->index_capacity;
-        _index          = malloc(sizeof(index_entry_t) * _index_capacity);
+        if (!first_run && sigwait(data->mask, &sig))
+            ERR("sigwait");
 
-        pthread_mutex_lock(&data->state->is_building_mtx);
-        data->state->is_building = true;
-        pthread_mutex_unlock(&data->state->is_building_mtx);
+        first_run = false;
 
-        nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
+        switch (sig) {
+        case SIGREINDEX:
+        case SIGALRM:
+            alarm(0);
 
-        pthread_mutex_lock(&data->state->index_mtx);
-        data->state->index_capacity = _index_capacity;
-        data->state->index_length   = _index_length;
-        // TODO: memory leak, should cleanup data->state->index first
-        data->state->index = _index;
-        pthread_mutex_unlock(&data->state->index_mtx);
+            _index_length   = 0;
+            _index_capacity = data->state->index_capacity;
+            _index          = malloc(sizeof(index_entry_t) * _index_capacity);
 
-        pthread_mutex_lock(&data->state->is_building_mtx);
-        data->state->is_building = false;
-        pthread_mutex_unlock(&data->state->is_building_mtx);
+            pthread_mutex_lock(&data->state->is_building_mtx);
+            data->state->is_building = true;
+            pthread_mutex_unlock(&data->state->is_building_mtx);
 
-        printf("Finished indexing %ld files.\n", data->state->index_length);
+            nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
+
+            pthread_mutex_lock(&data->state->index_mtx);
+            data->state->index_capacity = _index_capacity;
+            data->state->index_length   = _index_length;
+            // TODO: memory leak, should cleanup data->state->index first
+            data->state->index = _index;
+            pthread_mutex_unlock(&data->state->index_mtx);
+
+            pthread_mutex_lock(&data->state->is_building_mtx);
+            data->state->is_building = false;
+            pthread_mutex_unlock(&data->state->is_building_mtx);
+
+            printf("Finished indexing %ld files.\n", data->state->index_length);
+
+            break;
+
+        default:
+            fprintf(stderr, "unknown signal\n");
+            exit(EXIT_FAILURE);
+        }
 
         if (data->args.rebuild_interval == 0) break;
 
-        sleep(data->args.rebuild_interval);
+        alarm(data->args.rebuild_interval);
     }
 
     return NULL;
@@ -82,10 +102,18 @@ void *indexer(void *arg) {
 pthread_t start_indexer(args_t args, mole_state_t *state) {
     pthread_t tid;
 
+    sigset_t *new_mask = malloc(sizeof(sigset_t));
+    CHECK(new_mask == NULL);
+    sigemptyset(new_mask);
+    sigaddset(new_mask, SIGREINDEX);
+    sigaddset(new_mask, SIGALRM);
+    pthread_sigmask(SIG_BLOCK, new_mask, NULL);
+
     struct thread_data *data = malloc(sizeof(struct thread_data));
     CHECK(data == NULL);
     data->args  = args;
     data->state = state;
+    data->mask  = new_mask;
 
     CHECK(pthread_create(&tid, NULL, indexer, (void *)data));
 

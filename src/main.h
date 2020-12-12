@@ -1,8 +1,13 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+#include <signal.h>
+
 /// max amount of file descriptors used during indexing
 #define MAX_FD 30
+
+/// signal for a forced reindex
+#define SIGREINDEX SIGUSR1
 
 /// used for unrecoverable errors (panics)
 #define ERR(source)                                                  \

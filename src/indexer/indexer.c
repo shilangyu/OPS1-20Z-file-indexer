@@ -85,6 +85,11 @@ void *indexer(void *arg) {
             data->state->index          = _index;
             pthread_mutex_unlock(&data->state->index_mtx);
 
+
+            pthread_mutex_lock(&data->state->done_saving_mtx);
+            pthread_cond_signal(&data->state->done_saving);
+            pthread_mutex_unlock(&data->state->done_saving_mtx);
+
             pthread_mutex_lock(&data->state->is_building_mtx);
             data->state->is_building = false;
             pthread_mutex_unlock(&data->state->is_building_mtx);

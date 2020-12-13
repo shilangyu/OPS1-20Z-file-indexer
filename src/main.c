@@ -19,8 +19,8 @@ int main(int argc, char *argv[]) {
         .index_mtx       = PTHREAD_MUTEX_INITIALIZER,
         .is_building     = false,
         .is_building_mtx = PTHREAD_MUTEX_INITIALIZER,
-        .is_writing      = false,
-        .is_writing_mtx  = PTHREAD_MUTEX_INITIALIZER};
+        .done_saving     = PTHREAD_COND_INITIALIZER,
+        .done_saving_mtx = PTHREAD_MUTEX_INITIALIZER};
     state.index = malloc(sizeof(index_entry_t) * state.index_capacity);
 
     pthread_t indexer_tid = start_indexer(args, &state);
@@ -31,28 +31,28 @@ int main(int argc, char *argv[]) {
         switch (cmd.type) {
         case COMMAND_TYPE_EXIT:
             puts("Waiting for any unfinished work...");
-            // TODO: also wait for file write
-            while (1) {
-                pthread_mutex_lock(&state.is_building_mtx);
-                if (!state.is_building) break;
+            pthread_mutex_lock(&state.is_building_mtx);
+            if (state.is_building) {
+                pthread_mutex_unlock(&state.is_building_mtx);
+
+                pthread_mutex_lock(&state.done_saving_mtx);
+                pthread_cond_wait(&state.done_saving, &state.done_saving_mtx);
+                pthread_mutex_unlock(&state.done_saving_mtx);
+            } else {
                 pthread_mutex_unlock(&state.is_building_mtx);
             }
+
+            exit(EXIT_SUCCESS);
+
+            break;
+        case COMMAND_TYPE_EXIT_FORCE:
+            // puts("Waiting for any unfinished writes...");
             // while (1) {
             //     pthread_mutex_lock(&state.is_writing_mtx);
             //     if (!state.is_writing) break;
             //     pthread_mutex_unlock(&state.is_writing_mtx);
             // }
-            exit(EXIT_SUCCESS);
-
-            break;
-        case COMMAND_TYPE_EXIT_FORCE:
-            puts("Waiting for any unfinished writes...");
-            while (1) {
-                pthread_mutex_lock(&state.is_writing_mtx);
-                if (!state.is_writing) break;
-                pthread_mutex_unlock(&state.is_writing_mtx);
-            }
-            exit(EXIT_SUCCESS);
+            // exit(EXIT_SUCCESS);
 
             break;
         case COMMAND_TYPE_INDEX:

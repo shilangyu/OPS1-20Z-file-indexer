@@ -37,8 +37,8 @@ typedef struct {
     bool is_building;
     pthread_mutex_t is_building_mtx;
 
-    bool is_writing;
-    pthread_mutex_t is_writing_mtx;
+    pthread_cond_t done_saving;
+    pthread_mutex_t done_saving_mtx;
 
     index_entry_t *index;
     size_t index_length;

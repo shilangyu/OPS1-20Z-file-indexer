@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 index_file_type get_file_type(const char *filename, int type) {
@@ -81,4 +82,43 @@ const char *index_file_type_repr(index_file_type type) {
         fprintf(stderr, "unsupported file type\n");
         exit(EXIT_FAILURE);
     }
+}
+
+index_entry_t *load_index(const char *path, size_t *index_length) {
+    int fd = open(path, O_RDONLY);
+    struct stat stats;
+    if (fd == -1 || fstat(fd, &stats) == -1) {
+        return NULL;
+    }
+
+    index_entry_t *index = mmap(NULL, stats.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (index == MAP_FAILED) {
+        ERR("mmap");
+    }
+    *index_length = stats.st_size / sizeof(index_entry_t);
+
+    CHECK(close(fd));
+
+    return index;
+}
+
+void save_index(const char *path, index_entry_t *index, size_t index_length) {
+    int fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0666);
+    if (fd == -1) {
+        ERR("open");
+    }
+
+    size_t size = sizeof(index_entry_t) * index_length;
+    ftruncate(fd, size);
+
+    index_entry_t *res = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (res == MAP_FAILED) {
+        ERR("mmap");
+    }
+
+    for (size_t i = 0; i < index_length; i++) {
+        res[i] = index[i];
+    }
+
+    CHECK(close(fd));
 }

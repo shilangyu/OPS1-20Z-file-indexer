@@ -49,4 +49,11 @@ typedef struct {
 /// returns TID of the indexer thread
 pthread_t start_indexer(args_t args, mole_state_t *state);
 
+/// loads an index from a given file and sets it's length to `index_length`
+/// returns NULL if index file does not exist
+index_entry_t *load_index(const char *path, size_t *index_length);
+
+/// saves the passed index into a file pointed by path (will be overwritten)
+void save_index(const char *path, index_entry_t *index, size_t index_length);
+
 #endif

@@ -112,10 +112,44 @@ void read_next_test() {
     }
 }
 
+void read_write_test() {
+    index_entry_t data[2] = {
+        {.filename  = "filename",
+         .path      = "some path",
+         .owner_uid = 123,
+         .size      = 321,
+         .type      = INDEX_FILE_TYPE_DIR},
+        {.filename  = "hello",
+         .path      = "world",
+         .owner_uid = 69,
+         .size      = 420,
+         .type      = INDEX_FILE_TYPE_JPEG}};
+
+    save_index("./here", data, sizeof(data) / sizeof(data[0]));
+
+    size_t size;
+    index_entry_t *loaded = load_index("./here", &size);
+    assert(loaded != NULL);
+    assert(size == 2);
+
+    assert(!strcmp(loaded[0].filename, "filename"));
+    assert(!strcmp(loaded[0].path, "some path"));
+    assert(loaded[0].owner_uid == 123);
+    assert(loaded[0].size == 321);
+    assert(loaded[0].type == INDEX_FILE_TYPE_DIR);
+
+    assert(!strcmp(loaded[1].filename, "hello"));
+    assert(!strcmp(loaded[1].path, "world"));
+    assert(loaded[1].owner_uid == 69);
+    assert(loaded[1].size == 420);
+    assert(loaded[1].type == INDEX_FILE_TYPE_JPEG);
+}
+
 int main() {
     get_file_type_test();
     parse_arguments_test();
     index_file_type_repr_test();
     read_next_test();
+    read_write_test();
 }
 #endif

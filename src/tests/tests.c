@@ -128,7 +128,8 @@ void read_write_test() {
     save_index("./here", data, sizeof(data) / sizeof(data[0]));
 
     size_t length;
-    index_entry_t *loaded = load_index("./here", &length);
+    time_t l;
+    index_entry_t *loaded = load_index("./here", &length, &l);
     assert(loaded != NULL);
     assert(length == 2);
 

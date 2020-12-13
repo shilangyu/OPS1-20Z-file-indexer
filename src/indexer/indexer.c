@@ -56,7 +56,8 @@ void *indexer(void *arg) {
     struct thread_data *data = (struct thread_data *)arg;
 
     size_t loaded_length;
-    index_entry_t *loaded = load_index(data->args.index_file, &loaded_length);
+    time_t seconds_since_edit = 0;
+    index_entry_t *loaded     = load_index(data->args.index_file, &loaded_length, &seconds_since_edit);
     if (loaded != NULL) {
         pthread_mutex_lock(&data->state->index_mtx);
         free(data->state->index);
@@ -68,13 +69,19 @@ void *indexer(void *arg) {
         printf("Loaded index file with %ld entries.\n", loaded_length);
     }
 
-    bool first_run = true;
-    int sig        = SIGREINDEX;
+    bool run_immediately = false;
+    if (seconds_since_edit >= data->args.rebuild_interval) {
+        run_immediately = true;
+    } else {
+        alarm(data->args.rebuild_interval - seconds_since_edit);
+    }
+
+    int sig = SIGREINDEX;
     while (true) {
-        if (!first_run && sigwait(data->mask, &sig))
+        if (!run_immediately && sigwait(data->mask, &sig))
             ERR("sigwait");
 
-        first_run = false;
+        run_immediately = false;
 
         switch (sig) {
         case SIGREINDEX:

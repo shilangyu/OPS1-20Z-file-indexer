@@ -10,7 +10,7 @@
 
 int main(int argc, char *argv[]) {
     args_t args = parse_arguments(argc, argv);
-    printf("d = %s, f = %s, t = %d\n", args.directory, args.index_file, args.rebuild_interval);
+    printf("d = %s, f = %s, t = %ld\n", args.directory, args.index_file, args.rebuild_interval);
 
     mole_state_t state = {
         .index           = NULL,

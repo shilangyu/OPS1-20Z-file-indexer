@@ -50,8 +50,9 @@ typedef struct {
 pthread_t start_indexer(args_t args, mole_state_t *state);
 
 /// loads an index from a given file and sets it's length to `index_length`
+/// Additionally sets `seconds_since_edit` to exactly what the name suggests
 /// returns NULL if index file does not exist
-index_entry_t *load_index(const char *path, size_t *index_length);
+index_entry_t *load_index(const char *path, size_t *index_length, time_t *seconds_since_edit);
 
 /// saves the passed index into a file pointed by path (will be overwritten)
 void save_index(const char *path, index_entry_t *index, size_t index_length);

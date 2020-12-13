@@ -85,12 +85,14 @@ const char *index_file_type_repr(index_file_type type) {
     }
 }
 
-index_entry_t *load_index(const char *path, size_t *index_length) {
+index_entry_t *load_index(const char *path, size_t *index_length, time_t *seconds_since_edit) {
     int fd = open(path, O_RDONLY);
     struct stat stats;
     if (fd == -1 || fstat(fd, &stats) == -1) {
         return NULL;
     }
+
+    *seconds_since_edit = time(NULL) - stats.st_mtime;
 
     index_entry_t *index = mmap(NULL, stats.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (index == MAP_FAILED) {

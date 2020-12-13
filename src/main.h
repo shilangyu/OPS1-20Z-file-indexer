@@ -6,6 +6,9 @@
 /// max amount of file descriptors used during indexing
 #define MAX_FD 30
 
+/// max buffer size of string for paths in the index
+#define MAX_PATH_BUFFER 300
+
 /// signal for a forced reindex
 #define SIGREINDEX SIGUSR1
 

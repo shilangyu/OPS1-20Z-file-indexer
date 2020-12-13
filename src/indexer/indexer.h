@@ -26,8 +26,8 @@ index_file_type get_file_type(const char *filename, int type);
 /// type describing an indexed file
 typedef struct {
     index_file_type type;
-    char *filename;
-    char *path;
+    char filename[MAX_PATH_BUFFER];
+    char path[MAX_PATH_BUFFER];
     size_t size;
     size_t owner_uid;
 } index_entry_t;

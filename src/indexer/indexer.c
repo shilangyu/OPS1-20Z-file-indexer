@@ -11,16 +11,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/// frees all memory held by an index
-void destroy_index(index_entry_t *index, size_t index_length) {
-    for (size_t i = 0; i < index_length; i++) {
-        free(index[i].filename);
-        free(index[i].path);
-    }
-
-    free(index);
-}
-
 struct thread_data {
     args_t args;
     mole_state_t *state;
@@ -38,12 +28,19 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
         return 0;
     }
 
+    char *absolute = realpath(name, NULL);
+    if (strlen(name) >= MAX_PATH_BUFFER || strlen(absolute) >= MAX_PATH_BUFFER) {
+        printf("Path too long, will be omitted: %s\n", name);
+        return 0;
+    }
+
     index_entry_t in = {
-        .filename  = strdup(name),
-        .path      = realpath(name, NULL),
         .type      = t,
         .owner_uid = s->st_uid,
         .size      = s->st_size};
+    strcpy(in.filename, name);
+    strcpy(in.path, absolute);
+    free(absolute);
 
     if (_index_length == _index_capacity) {
         _index_capacity *= 2;
@@ -82,7 +79,7 @@ void *indexer(void *arg) {
             nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
 
             pthread_mutex_lock(&data->state->index_mtx);
-            destroy_index(data->state->index, data->state->index_length);
+            free(data->state->index);
             data->state->index_capacity = _index_capacity;
             data->state->index_length   = _index_length;
             data->state->index          = _index;

@@ -105,9 +105,8 @@ void *indexer(void *arg) {
             data->state->index          = _index;
             pthread_mutex_unlock(&data->state->index_mtx);
 
-            save_index(data->args.index_file, data->state->index, data->state->index_length);
-
             pthread_mutex_lock(&data->state->done_saving_mtx);
+            save_index(data->args.index_file, data->state->index, data->state->index_length);
             pthread_cond_signal(&data->state->done_saving);
             pthread_mutex_unlock(&data->state->done_saving_mtx);
 

@@ -46,13 +46,10 @@ int main(int argc, char *argv[]) {
 
             break;
         case COMMAND_TYPE_EXIT_FORCE:
-            // puts("Waiting for any unfinished writes...");
-            // while (1) {
-            //     pthread_mutex_lock(&state.is_writing_mtx);
-            //     if (!state.is_writing) break;
-            //     pthread_mutex_unlock(&state.is_writing_mtx);
-            // }
-            // exit(EXIT_SUCCESS);
+            puts("Waiting for any unfinished writes...");
+
+            pthread_mutex_lock(&state.done_saving_mtx);
+            exit(EXIT_SUCCESS);
 
             break;
         case COMMAND_TYPE_INDEX:

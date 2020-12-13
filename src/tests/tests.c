@@ -127,10 +127,10 @@ void read_write_test() {
 
     save_index("./here", data, sizeof(data) / sizeof(data[0]));
 
-    size_t size;
-    index_entry_t *loaded = load_index("./here", &size);
+    size_t length;
+    index_entry_t *loaded = load_index("./here", &length);
     assert(loaded != NULL);
-    assert(size == 2);
+    assert(length == 2);
 
     assert(!strcmp(loaded[0].filename, "filename"));
     assert(!strcmp(loaded[0].path, "some path"));

@@ -55,6 +55,19 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
 void *indexer(void *arg) {
     struct thread_data *data = (struct thread_data *)arg;
 
+    size_t loaded_length;
+    index_entry_t *loaded = load_index(data->args.index_file, &loaded_length);
+    if (loaded != NULL) {
+        pthread_mutex_lock(&data->state->index_mtx);
+        free(data->state->index);
+        data->state->index_capacity = loaded_length;
+        data->state->index_length   = loaded_length;
+        data->state->index          = loaded;
+        pthread_mutex_unlock(&data->state->index_mtx);
+
+        printf("Loaded index file with %ld entries.\n", loaded_length);
+    }
+
     bool first_run = true;
     int sig        = SIGREINDEX;
     while (true) {
@@ -85,6 +98,7 @@ void *indexer(void *arg) {
             data->state->index          = _index;
             pthread_mutex_unlock(&data->state->index_mtx);
 
+            save_index(data->args.index_file, data->state->index, data->state->index_length);
 
             pthread_mutex_lock(&data->state->done_saving_mtx);
             pthread_cond_signal(&data->state->done_saving);

@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -97,9 +98,14 @@ index_entry_t *load_index(const char *path, size_t *index_length) {
     }
     *index_length = stats.st_size / sizeof(index_entry_t);
 
+    index_entry_t *index_unmapped = malloc(stats.st_size);
+    CHECK(index_unmapped == NULL);
+    memcpy(index_unmapped, index, stats.st_size);
+    CHECK(munmap(index, stats.st_size));
+
     CHECK(close(fd));
 
-    return index;
+    return index_unmapped;
 }
 
 void save_index(const char *path, index_entry_t *index, size_t index_length) {

@@ -69,7 +69,7 @@ void *indexer(void *arg) {
         printf("Loaded index file with %ld entries.\n", loaded_length);
     }
 
-    bool run_immediately = false;
+    bool run_immediately = seconds_since_edit == -1;
     if (seconds_since_edit >= data->args.rebuild_interval) {
         run_immediately = true;
     } else {

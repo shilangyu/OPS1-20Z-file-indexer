@@ -33,6 +33,7 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     char *absolute = realpath(name, NULL);
     if (strlen(name) >= MAX_PATH_BUFFER || strlen(absolute) >= MAX_PATH_BUFFER) {
         printf("Path too long, will be omitted: %s\n", name);
+        free(absolute);
         return 0;
     }
 
@@ -52,6 +53,34 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     _walk_data.index[_walk_data.index_length++] = in;
 
     return 0;
+}
+
+void perform_indexing(struct thread_data *data) {
+    _walk_data.index_length   = 0;
+    _walk_data.index_capacity = data->state->index_capacity;
+    _walk_data.index          = malloc(sizeof(index_entry_t) * _walk_data.index_capacity);
+
+    pthread_mutex_lock(&data->state->is_building_mtx);
+    data->state->is_building = true;
+    pthread_mutex_unlock(&data->state->is_building_mtx);
+
+    nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
+
+    pthread_mutex_lock(&data->state->index_mtx);
+    free(data->state->index);
+    data->state->index_capacity = _walk_data.index_capacity;
+    data->state->index_length   = _walk_data.index_length;
+    data->state->index          = _walk_data.index;
+    pthread_mutex_unlock(&data->state->index_mtx);
+
+    pthread_mutex_lock(&data->state->done_saving_mtx);
+    save_index(data->args.index_file, data->state->index, data->state->index_length);
+    pthread_cond_signal(&data->state->done_saving);
+    pthread_mutex_unlock(&data->state->done_saving_mtx);
+
+    pthread_mutex_lock(&data->state->is_building_mtx);
+    data->state->is_building = false;
+    pthread_mutex_unlock(&data->state->is_building_mtx);
 }
 
 void *indexer(void *arg) {
@@ -90,36 +119,11 @@ void *indexer(void *arg) {
         case SIGALRM:
             alarm(0);
 
-            _walk_data.index_length   = 0;
-            _walk_data.index_capacity = data->state->index_capacity;
-            _walk_data.index          = malloc(sizeof(index_entry_t) * _walk_data.index_capacity);
-
-            pthread_mutex_lock(&data->state->is_building_mtx);
-            data->state->is_building = true;
-            pthread_mutex_unlock(&data->state->is_building_mtx);
-
-            nftw(data->args.directory, walk, MAX_FD, FTW_PHYS);
-
-            pthread_mutex_lock(&data->state->index_mtx);
-            free(data->state->index);
-            data->state->index_capacity = _walk_data.index_capacity;
-            data->state->index_length   = _walk_data.index_length;
-            data->state->index          = _walk_data.index;
-            pthread_mutex_unlock(&data->state->index_mtx);
-
-            pthread_mutex_lock(&data->state->done_saving_mtx);
-            save_index(data->args.index_file, data->state->index, data->state->index_length);
-            pthread_cond_signal(&data->state->done_saving);
-            pthread_mutex_unlock(&data->state->done_saving_mtx);
-
-            pthread_mutex_lock(&data->state->is_building_mtx);
-            data->state->is_building = false;
-            pthread_mutex_unlock(&data->state->is_building_mtx);
+            perform_indexing(data);
 
             printf("Finished indexing %ld files.\n", data->state->index_length);
 
             break;
-
         default:
             fprintf(stderr, "unknown signal\n");
             exit(EXIT_FAILURE);

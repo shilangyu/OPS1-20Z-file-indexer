@@ -2,6 +2,7 @@
 #include "../cmd/cmd.h"
 #include "../main.h"
 #include "./indexer.h"
+#include <errno.h>
 #include <fcntl.h>
 #include <ftw.h>
 #include <pthread.h>
@@ -108,6 +109,23 @@ index_entry_t *load_index(const char *path, size_t *index_length, time_t *second
     return index_unmapped;
 }
 
+/// safe for interruptible writes
+ssize_t bulk_write(int fd, void *buf, size_t count) {
+    ssize_t c;
+    ssize_t len = 0;
+    do {
+        do
+            c = write(fd, buf, count);
+        while (c == -1L && errno == EINTR);
+
+        if (c < 0) return c;
+        buf += c;
+        len += c;
+        count -= c;
+    } while (count > 0);
+    return len;
+}
+
 void save_index(const char *path, index_entry_t *index, size_t index_length) {
     int fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd == -1) {
@@ -115,15 +133,9 @@ void save_index(const char *path, index_entry_t *index, size_t index_length) {
     }
 
     size_t size = sizeof(index_entry_t) * index_length;
-    ftruncate(fd, size);
 
-    index_entry_t *res = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (res == MAP_FAILED) {
-        ERR("mmap");
-    }
-
-    for (size_t i = 0; i < index_length; i++) {
-        res[i] = index[i];
+    if (bulk_write(fd, index, size) != size) {
+        ERR("write");
     }
 
     CHECK(close(fd));

@@ -8,4 +8,4 @@ mole: $(SOURCE_FILES)
 
 test: $(SOURCE_FILES)
 	$(CC) -o $@ $? $(CFLAGS) -D TEST
-	echo 'run tests with ./test < assets/test-inputs.txt'
+	@echo 'run tests with "./test < assets/test-inputs.txt"'

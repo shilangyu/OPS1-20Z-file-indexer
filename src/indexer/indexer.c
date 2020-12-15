@@ -18,9 +18,11 @@ struct thread_data {
 };
 
 // boo, goddamn C
-index_entry_t *_index;
-size_t _index_length;
-size_t _index_capacity;
+struct {
+    index_entry_t *index;
+    size_t index_length;
+    size_t index_capacity;
+} _walk_data;
 
 int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     index_file_type t = get_file_type(name, type);
@@ -42,12 +44,12 @@ int walk(const char *name, const struct stat *s, int type, struct FTW *f) {
     strcpy(in.path, absolute);
     free(absolute);
 
-    if (_index_length == _index_capacity) {
-        _index_capacity *= 2;
-        _index = realloc(_index, sizeof(index_entry_t) * _index_capacity);
+    if (_walk_data.index_length == _walk_data.index_capacity) {
+        _walk_data.index_capacity *= 2;
+        _walk_data.index = realloc(_walk_data.index, sizeof(index_entry_t) * _walk_data.index_capacity);
     }
 
-    _index[_index_length++] = in;
+    _walk_data.index[_walk_data.index_length++] = in;
 
     return 0;
 }
@@ -88,9 +90,9 @@ void *indexer(void *arg) {
         case SIGALRM:
             alarm(0);
 
-            _index_length   = 0;
-            _index_capacity = data->state->index_capacity;
-            _index          = malloc(sizeof(index_entry_t) * _index_capacity);
+            _walk_data.index_length   = 0;
+            _walk_data.index_capacity = data->state->index_capacity;
+            _walk_data.index          = malloc(sizeof(index_entry_t) * _walk_data.index_capacity);
 
             pthread_mutex_lock(&data->state->is_building_mtx);
             data->state->is_building = true;
@@ -100,9 +102,9 @@ void *indexer(void *arg) {
 
             pthread_mutex_lock(&data->state->index_mtx);
             free(data->state->index);
-            data->state->index_capacity = _index_capacity;
-            data->state->index_length   = _index_length;
-            data->state->index          = _index;
+            data->state->index_capacity = _walk_data.index_capacity;
+            data->state->index_length   = _walk_data.index_length;
+            data->state->index          = _walk_data.index;
             pthread_mutex_unlock(&data->state->index_mtx);
 
             pthread_mutex_lock(&data->state->done_saving_mtx);

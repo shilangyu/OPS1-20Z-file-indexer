@@ -87,7 +87,7 @@ void *indexer(void *arg) {
     struct thread_data *data = (struct thread_data *)arg;
 
     size_t loaded_length;
-    time_t seconds_since_edit = 0;
+    time_t seconds_since_edit = -1;
     index_entry_t *loaded     = load_index(data->args.index_file, &loaded_length, &seconds_since_edit);
     if (loaded != NULL) {
         pthread_mutex_lock(&data->state->index_mtx);

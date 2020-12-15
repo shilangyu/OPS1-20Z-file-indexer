@@ -157,3 +157,11 @@ pthread_t start_indexer(args_t args, mole_state_t *state) {
 
     return tid;
 }
+
+void mole_state_destroy(mole_state_t *state) {
+    pthread_mutex_destroy(&state->done_saving_mtx);
+    pthread_mutex_destroy(&state->index_mtx);
+    pthread_mutex_destroy(&state->is_building_mtx);
+    pthread_cond_destroy(&state->done_saving);
+    free(state->index);
+}

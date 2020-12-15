@@ -42,6 +42,10 @@ int main(int argc, char *argv[]) {
                 pthread_mutex_unlock(&state.is_building_mtx);
             }
 
+            pthread_cancel(indexer_tid);
+            pthread_join(indexer_tid, NULL);
+
+            mole_state_destroy(&state);
             exit(EXIT_SUCCESS);
 
             break;
@@ -49,6 +53,11 @@ int main(int argc, char *argv[]) {
             puts("Waiting for any unfinished writes...");
 
             pthread_mutex_lock(&state.done_saving_mtx);
+
+            pthread_cancel(indexer_tid);
+            pthread_join(indexer_tid, NULL);
+
+            mole_state_destroy(&state);
             exit(EXIT_SUCCESS);
 
             break;
@@ -123,7 +132,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    pthread_join(indexer_tid, NULL);
     return 0;
 }
 

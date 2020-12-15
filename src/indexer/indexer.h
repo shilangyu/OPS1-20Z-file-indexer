@@ -57,4 +57,7 @@ index_entry_t *load_index(const char *path, size_t *index_length, time_t *second
 /// saves the passed index into a file pointed by path (will be overwritten)
 void save_index(const char *path, index_entry_t *index, size_t index_length);
 
+/// releases all resources for mole_state_t
+void mole_state_destroy(mole_state_t *state);
+
 #endif

@@ -83,9 +83,8 @@ void perform_indexing(struct thread_data *data) {
     pthread_mutex_unlock(&data->state->is_building_mtx);
 }
 
-void *indexer(void *arg) {
-    struct thread_data *data = (struct thread_data *)arg;
-
+/// loads in the index file if exists and returns time since last indexing
+time_t initial_load(struct thread_data *data) {
     size_t loaded_length;
     time_t seconds_since_edit = -1;
     index_entry_t *loaded     = load_index(data->args.index_file, &loaded_length, &seconds_since_edit);
@@ -99,6 +98,14 @@ void *indexer(void *arg) {
 
         printf("Loaded index file with %ld entries.\n", loaded_length);
     }
+
+    return seconds_since_edit;
+}
+
+void *indexer(void *arg) {
+    struct thread_data *data = (struct thread_data *)arg;
+
+    time_t seconds_since_edit = initial_load(data);
 
     bool run_immediately = seconds_since_edit == -1;
     if (seconds_since_edit >= data->args.rebuild_interval) {

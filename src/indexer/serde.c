@@ -86,8 +86,13 @@ const char *index_file_type_repr(index_file_type type) {
 
 index_entry_t *load_index(const char *path, size_t *index_length, time_t *seconds_since_edit) {
     int fd = open(path, O_RDONLY);
+    if (fd == -1) {
+        return NULL;
+    }
+
     struct stat stats;
-    if (fd == -1 || fstat(fd, &stats) == -1) {
+    if (fstat(fd, &stats) == -1) {
+        CHECK(close(fd));
         return NULL;
     }
 

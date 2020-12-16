@@ -7,13 +7,13 @@
 #include <unistd.h>
 
 void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicate)(index_entry_t index, void *arg), void *arg) {
-    bool has_over_3 = false;
-    size_t found    = 0;
+    const size_t pager_threshold = 3;
+
+    size_t found = 0;
     for (size_t i = 0; i < index_length; i++) {
         if (predicate(index[i], arg)) {
             found++;
-            if (found == 3) {
-                has_over_3 = true;
+            if (found == pager_threshold) {
                 break;
             }
         }
@@ -22,7 +22,7 @@ void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicat
     FILE *out = stdout;
 
     char *pager;
-    if (has_over_3 && (pager = getenv("PAGER")) != NULL) {
+    if (found >= pager_threshold && (pager = getenv("PAGER")) != NULL) {
         out = popen(pager, "w");
         if (out == NULL) {
             ERR("popen");
@@ -46,8 +46,10 @@ void print_satisfying(index_entry_t *index, size_t index_length, bool (*predicat
 }
 
 static inline bool starts_with_and_more(const char *string, const char *prefix) {
-    return strlen(string) > strlen(prefix) &&
-           !strncmp(string, prefix, strlen(prefix));
+    size_t prefix_len = strlen(prefix);
+
+    return strlen(string) > prefix_len &&
+           !strncmp(string, prefix, prefix_len);
 }
 
 command_t read_next() {
